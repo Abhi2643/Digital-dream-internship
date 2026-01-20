@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Employee Management Dashboard</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      background: #f4f6f8;
+    }
+
+    .container {
+      width: 95%;
+      max-width: 1000px;
+      margin: 30px auto;
+    }
+
+    /* Form Card */
+    .card {
+      background: #ffffff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      margin-bottom: 30px;
+    }
+
+    .card h2 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    form {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+    }
+
+    form input {
+      padding: 10px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      font-size: 14px;
+    }
+
+    form button {
+      grid-column: 1 / -1;
+      padding: 12px;
+      background: #007bff;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    form button:hover {
+      background: #0056b3;
+    }
+
+    .error {
+      color: red;
+      margin-top: 10px;
+      text-align: center;
+    }
+
+    /* Table */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #ffffff;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    thead {
+      background: #343a40;
+      color: #ffffff;
+    }
+
+    th, td {
+      padding: 12px;
+      text-align: center;
+      font-size: 14px;
+    }
+
+    tbody tr:nth-child(even) {
+      background: #f2f2f2;
+    }
+
+    tbody tr:hover {
+      background: #e9ecef;
+    }
+
+    .btn-delete {
+      background: #dc3545;
+      color: #ffffff;
+      border: none;
+      padding: 6px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    .btn-delete:hover {
+      background: #b52a37;
+    }
+
+    @media (max-width: 600px) {
+      th, td {
+        font-size: 12px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Employee Registration Form -->
+    <div class="card">
+      <h2>Employee Registration</h2>
+      <form id="employeeForm">
+        <input type="text" id="empId" placeholder="Employee ID" />
+        <input type="text" id="name" placeholder="Name" />
+        <input type="text" id="department" placeholder="Department" />
+        <input type="email" id="email" placeholder="Email" />
+        <input type="text" id="salary" placeholder="Salary" />
+        <button type="submit">Add Employee</button>
+      </form>
+      <div id="errorMsg" class="error"></div>
+    </div>
+
+    <!-- Employee Table -->
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Emp ID</th>
+          <th>Name</th>
+          <th>Department</th>
+          <th>Email</th>
+          <th>Salary</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody id="employeeTableBody"></tbody>
+    </table>
+  </div>
+
+  <script>
+    const form = document.getElementById("employeeForm");
+    const errorMsg = document.getElementById("errorMsg");
+    const tableBody = document.getElementById("employeeTableBody");
+
+    let employees = JSON.parse(localStorage.getItem("employees")) || [];
+
+    function renderTable() {
+      tableBody.innerHTML = "";
+      employees.forEach((emp, index) => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${index + 1}</td>
+          <td>${emp.empId}</td>
+          <td>${emp.name}</td>
+          <td>${emp.department}</td>
+          <td>${emp.email}</td>
+          <td>${emp.salary}</td>
+          <td><button class="btn-delete" onclick="deleteEmployee(${index})">Delete</button></td>
+        `;
+        tableBody.appendChild(row);
+      });
+    }
+
+    function validateEmail(email) {
+      const pattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      return pattern.test(email);
+    }
+
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+
+      const empId = document.getElementById("empId").value.trim();
+      const name = document.getElementById("name").value.trim();
+      const department = document.getElementById("department").value.trim();
+      const email = document.getElementById("email").value.trim();
+      const salary = document.getElementById("salary").value.trim();
+
+      if (!empId || !name || !department || !email || !salary) {
+        errorMsg.textContent = "All fields are mandatory.";
+        return;
+      }
+
+      if (!validateEmail(email)) {
+        errorMsg.textContent = "Invalid email format.";
+        return;
+      }
+
+      if (isNaN(salary)) {
+        errorMsg.textContent = "Salary must be numeric.";
+        return;
+      }
+
+      errorMsg.textContent = "";
+
+      const employee = { empId, name, department, email, salary };
+      employees.push(employee);
+      localStorage.setItem("employees", JSON.stringify(employees));
+
+      form.reset();
+      renderTable();
+    });
+
+    function deleteEmployee(index) {
+      if (confirm("Are you sure you want to delete this employee?")) {
+        employees.splice(index, 1);
+        localStorage.setItem("employees", JSON.stringify(employees));
+        renderTable();
+      }
+    }
+
+    renderTable();
+  </script>
+</body>
+</html>
